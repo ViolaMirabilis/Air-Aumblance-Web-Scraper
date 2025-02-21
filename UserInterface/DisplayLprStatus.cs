@@ -22,6 +22,7 @@ namespace air_ambulance_web_scraper.UserInterface
         // info available from the HttpRequest
         internal void ChangeColor(string statusColor, string status)
         {
+            // simplify this, lol.
             switch (statusColor)
             {
                 case "1":

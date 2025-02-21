@@ -21,20 +21,11 @@ namespace air_ambulance_web_scraper.Controllers
         internal void CreateConfigFile(Config config)
         {
             XmlSerializer serializer = new XmlSerializer(typeof(Config));
-            //FileStream stream = File.OpenWrite(Helpers.configPath);
 
             using (FileStream stream = File.OpenWrite($@"{Constants.configPath}\config.xml"))
             {
                 serializer.Serialize(stream, config);
             }
-
-            /* serializer.Serialize(stream, new Config())
-            {
-                RecipientEmail = config.RecipientEmail,
-                SMTP_Email = config.SMTP_Email,
-                SMTP_Port = config.SMTP_Port,
-                Status = config.Status
-            }); */
 
         }
 
@@ -48,32 +39,6 @@ namespace air_ambulance_web_scraper.Controllers
             {
                 config = (Config)serializer.Deserialize(reader);
             }
-
-            // DEBUG MODE (testing if it prints all the data correctly) -----------------------------------------------------
-
-            // status doesn't work even with ToString(); It only works if a specified index is provided
-            //Console.WriteLine(config.Status.ToString());
-            //Console.WriteLine(config.Status);
-            //Console.WriteLine(config.RecipientEmail[0].ToString());
-
-            foreach (var status in config.Status)
-            {
-                // adds a status one by one (by reading from the XML)
-                //config.Status.Add(status);
-                Console.WriteLine(status);
-            }
-
-            foreach (var email in config.RecipientEmail)
-            {
-                // adds emails one by one (by reading from the XML)
-                //config.RecipientEmail.Add(email);
-                Console.WriteLine(email);
-            }
-            
-            Console.WriteLine(config.SMTP_Email);
-            Console.WriteLine(config.SMTP_Port);
-
-            // END OF DEBUG MOGE ------------------------------------------------------------------------------------------
 
             return config;
             

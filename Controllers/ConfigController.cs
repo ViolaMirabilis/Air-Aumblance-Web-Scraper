@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using air_ambulance_web_scraper.Models;
@@ -38,126 +40,124 @@ namespace air_ambulance_web_scraper.Controllers
         internal Config ReadConfigInformation()
         {
             // holds up to 3 emails
-            List<string> emails = new List<string>();
-            List<MissionType> statuses = new List<MissionType>();
-            string smtpEmail, smtpPassword, smtpServer;
-            int smtpPort;
+            List<string> emails = ValidateMultipleEmails("Email: ", "Invalid Input");
+            List<MissionType> statuses = ValidateStatuses("Status: ", "Invalid Input");
+            string smtpEmail = ValidateEmail("SMTP Email: ", "Invalid Input");
+            string smtpPassword = ValidateInput("SMTP Password: ", "Invalid Input"); ;
+            string smtpServer = ValidateInput("SMTP Server: ", "Invalid Input"); ;
+            int smtpPort = ValidateInteger("SMTP Port:", "Invalid Input");
 
-            // recipient email input if config doesnt exist
-            if (!CheckIfConfigExists())
-            {
-                Console.WriteLine("----- Configuration file -----");
-                Console.WriteLine("Send emails to: ");
-                
-                for (int i = 0; i < 3; i++)
-                {
-                    Console.Write($"Email #{i+1}: ");
-                    string? email = Console.ReadLine();
-                    if (!string.IsNullOrEmpty(email) && email.Contains('@'))
-                    {
-                        emails.Add(email);
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("Email(s) added!");
-                        Console.ResetColor();
-                    }
-                    else
-                    {
-                        break;
-                    }
+            Config config = new Config(emails, smtpServer, smtpEmail, smtpPassword, smtpPort, statuses);
+            return config;
 
-                }
-            }
+            DisplayConfig(config);
             
-            // SMTP email input
+        }
+
+        private string ValidateInput(string message, string invalidInput)
+        {
             while (true)
             {
-                Console.Write("Your SMTP email: ");
-                smtpEmail = Console.ReadLine();
+                Console.Write($"{message}: ");
+                string input = Console.ReadLine();
 
-                if (!string.IsNullOrEmpty(smtpEmail) && smtpEmail.Contains('@'))
+                if (!string.IsNullOrEmpty(input))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("SMTP Email added!");
+                    Console.WriteLine("Added successfully!");
                     Console.ResetColor();
-                    break;
+                    return input;
+                }
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(invalidInput);
+                Console.ResetColor();
+            }
+        }
+        private string ValidateEmail(string message, string invalidInput)
+        {
+            while (true)
+            {
+                Console.Write($"{message}: ");
+                string input = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(input) && input.Contains('@'))
+                {
+                    return input;
+                }
+                else if (string.IsNullOrEmpty(input))
+                {
+                    return null;
+                }
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(invalidInput);
+                Console.ResetColor();
+            }
+        }
+        private string ValidateEmail(string invalidInput)
+        {
+            while (true)
+            {
+                string input = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(input) && input.Contains('@'))
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Added successfully!");
+                    Console.ResetColor();
+                    return input;
+                }
+                else if (string.IsNullOrEmpty(input))
+                {
+                    return null;
+                }
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(invalidInput);
+                Console.ResetColor();
+            }
+        }
+        private int ValidateInteger(string message, string invalidInput)
+        {
+            while (true)
+            {
+                Console.Write($"{message}: ");
+                string input = Console.ReadLine();
+                int numeral;
+                if (!string.IsNullOrEmpty(input))
+                {
+                    if (int.TryParse(input, out numeral))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Added successfully!");
+                        Console.ResetColor();
+                        return numeral;
+                    }
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(invalidInput);
+                    Console.ResetColor();
+                }
+                
+            }
+        }
+        private List<string> ValidateMultipleEmails(string message, string invalidInput)
+        {
+            List<string> emails = new List<string>();
+            for (int i = 0; i < 3; i++)
+            {
+                Console.Write(message);
+                string input = ValidateEmail(invalidInput);
+                if (!string.IsNullOrEmpty(input))
+                {
+                    emails.Add(input);
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Try again.");
-                    Console.ResetColor();
-                    continue;
-                }
-            }
-
-            // SMTP Password input
-            while (true)
-            {
-                Console.Write("Your SMTP password: ");
-                smtpPassword = Console.ReadLine();
-
-                if (!string.IsNullOrEmpty(smtpPassword))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("SMTP Password added!");
-                    Console.ResetColor();
                     break;
                 }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Try again.");
-                    Console.ResetColor();
-                    continue;
-                }
             }
-
-            // SMTP Server input
-            while (true)
-            {
-                Console.Write("Your SMTP server: ");
-                smtpServer = Console.ReadLine();
-
-                if (!string.IsNullOrEmpty(smtpServer))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("SMTP server added!");
-                    Console.ResetColor();
-                    break;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Try again.");
-                    Console.ResetColor();
-                    continue;
-                }
-            }
-
-            // SMTP Port input
-            while (true)
-            {
-                Console.Write("SMTP Port:");
-                string port = Console.ReadLine();
-
-                // out _ means to not assign it anywhere.
-                if (int.TryParse(port, out smtpPort))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("SMTP Port added!");
-                    Console.ResetColor();
-                    break;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Try again.");
-                    Console.ResetColor();
-                    continue;
-                }
-            }
-
-            // adding statuses to be delivered via email
+            return emails;
+        }
+        private List<MissionType> ValidateStatuses(string message, string invalidInput)
+        {
             Console.WriteLine("----- Available Statuses -----\n" +
                     "1. Dyzur zakonczony\n" +
                     "2. Zespol w gotowosci\n" +
@@ -165,75 +165,57 @@ namespace air_ambulance_web_scraper.Controllers
                     "4. Powrot na radiu\n" +
                     "5. Dyzur zawieszony\n");
 
+            List<MissionType> statuses = new List<MissionType>();
             while (true)
             {
-                // CHECK THIS SECTION LOL
+                int statusInput = ValidateInteger(message, invalidInput);
 
-                Console.Write("Status: ");
-                string statusInput = Console.ReadLine();
-                int status;
-
-                // checks if the input is integer. If it's null or empty or less than 1 statuses have been checked - it loops again.
-                if (!int.TryParse(statusInput, out status))
+                if (statusInput == 0)
                 {
-                    // Console.WriteLine("Invalid input.");
-                    // continue;
                     break;
                 }
-                else if ((string.IsNullOrEmpty(statusInput) && (statuses.Count > 1)))
-                {
-                    continue;
-                }
 
-                if (!statuses.Contains((MissionType)status))
+                if (!statuses.Contains((MissionType)statusInput))
                 {
                     // because index starts at 0
-                    status = status - 1;
-                    statuses.Add((MissionType)status);
+                    statusInput = statusInput - 1;
+                    statuses.Add((MissionType)statusInput);
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("STATUS added!");
                     Console.ResetColor();
-                    continue;
                 }
-                else if (statuses.Contains((MissionType)status))
+                else if (statuses.Contains((MissionType)statusInput))
                 {
                     Console.WriteLine("This status is already checked! Choose another one!");
-                    continue;
-                }
-                else if (status == 0)
-                {
-                    break;
                 }
             }
-
-            // displays potential configuration and asks for confirmation
+            return statuses;
+        }
+        private void DisplayConfig(Config config)
+        {
+            Console.WriteLine("Press ANY key to continue...");
+            Console.ReadKey();
             Console.Clear();
             Console.WriteLine("---- Your Configuration ----");
             Console.WriteLine("Recipients: ");
 
-            for (int i = 0; i < emails.Count; i++)
+            for (int i = 0; i < config.RecipientEmail.Count; i++)
             {
-                Console.WriteLine($"{i+1}. {emails[i]}");
+                Console.WriteLine($"{i + 1}. {config.RecipientEmail[i]}");
             }
-
-            Console.WriteLine($"SMTP E-mail: {smtpEmail}");
-            Console.WriteLine($"SMTP Port: {smtpPort}");
+            Console.WriteLine($"SMTP E-mail: {config.SMTP_Email}");
+            Console.WriteLine($"SMTP Port: {config.SMTP_Port}");
 
             // displays a status of the next index. gotta fix.
             Console.WriteLine("Selected statuses: ");
-            for (int i = 0; i < statuses.Count; i++)
+            for (int i = 0; i < config.Status.Count; i++)
             {
                 // creating a "mission" variable of MissionType[enum] type and then casting the INTEGER (index) to the enum.
                 //MissionType mission = (MissionType)statuses[i];
-                Console.WriteLine($"{i+1}. {statuses[i].ToString()}");
+                Console.WriteLine($"{i + 1}. {config.Status[i].ToString()}");
             }
-
-            //Console.WriteLine("Confirm your config? Yes/No");
-
-            Config config = new Config(emails, smtpServer, smtpEmail, smtpPassword, smtpPort, statuses);
-            return config;
         }
-
+        
     }
 
 }
